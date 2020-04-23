@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    io.kompose.service: webserver
+  name: webserver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: webserver
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        io.kompose.service: webserver
+    spec:
+      containers:
+      - args:
+        - webserver
+        env:
+        - name: EXECUTOR
+          value: Local
+        - name: LOAD_EX
+          value: n
+        - name: POSTGRES_HOST
+          value: 127.0.0.1
+        - name: POSTGRES_PASSWORD
+          value: airflow111smpp
+        - name: POSTGRES_PORT
+          value: "5415"
+        image: nexus-registry.s7.aero:18117/puckel/docker-airflow:latest
+        imagePullPolicy: ""
+        livenessProbe:
+          exec:
+            command:
+            - '[ -f /usr/local/airflow/airflow-webserver.pid ]'
+          failureThreshold: 3
+          periodSeconds: 30
+          timeoutSeconds: 30
+        name: webserver
+        resources: {}
+        volumeMounts:
+        - mountPath: /usr/local/airflow/dags
+          name: webserver-volume
+        - mountPath: /home/user/SMPP
+          name: webserver-volume
+        - mountPath: /usr/local/airflow/airflow.cfg
+          name: webserver-volume
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes:
+      - name: webserver-volume
+        persistentVolumeClaim:
+          claimName: webserver-volume
+status: {}
